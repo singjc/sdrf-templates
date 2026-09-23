@@ -25,9 +25,15 @@ documentation: |
     Optional computational estimates derived from mass-spectrometry evidence when the original
     search tolerance is unavailable, uncertain, or being independently assessed. These fields do
     not assert the tolerance used in the original database search.
-  - `comment[predicted modification]`: Optional computationally inferred modification candidate.
-    Each candidate gets its own column. This field does not assert that the modification was
-    searched, identified, or site-localized in the original analysis.
+  - `comment[predicted modification]` / `comment[predicted modification evidence]`:
+    Optional repeated column pairs for computationally inferred modification candidates. The nth
+    prediction pairs with the nth evidence entry, and the evidence repeats the same candidate
+    accession with `AC=` so the association does not rely only on column order. Evidence describes
+    support for the prediction (for example observed delta mass, run support, prevalence, ambiguity,
+    or semantic support); a probability describing recurrent mass-family support must not be
+    interpreted as the probability that the candidate chemical identity is correct. These fields do
+    not assert that the modification was searched, identified, or site-localized in the original
+    analysis.
   - MS range columns (`comment[ms min/max mz/charge/rt/im]`): Optional method parameters
     for documenting acquisition settings.
 
@@ -378,6 +384,33 @@ columns:
           examples:
             - NT=Methylation;AC=UNIMOD:34
             - NT=Phospho;AC=UNIMOD:21
+
+  - name: comment[predicted modification evidence]
+    description: >
+      Structured evidence supporting a computationally predicted modification. This column
+      has multiple cardinality and is paired one-to-one with comment[predicted modification]:
+      the nth evidence column corresponds to the nth prediction column. Each evidence value
+      must repeat the same candidate accession using AC= so the association remains explicit
+      if columns are processed or reordered. Additional semicolon-separated key-value fields
+      may report evidence such as observed delta mass, supporting runs, prevalence, ambiguity,
+      and semantic support. Probabilities describing recurrent mass-family or prevalence support
+      are evidence measures and must not be interpreted as probabilities that the candidate
+      chemical identity is correct.
+    requirement: optional
+    cardinality: multiple
+    allow_not_applicable: true
+    allow_not_available: true
+    validators:
+      - validator_name: pattern
+        params:
+          pattern: "^AC=(UNIMOD|MOD):[A-Za-z0-9]+(;[^;\t=]+=[^;\t]+)*$"
+          error_level: warning
+          description: >
+            Evidence uses semicolon-separated key-value fields, beginning with the same
+            candidate accession as the paired predicted modification.
+          examples:
+            - "AC=UNIMOD:34;DM=14.015503 Da;RUNS=6/6;PREV=1.0;AMBIGUITY=none;SEMANTIC=not-evaluated"
+            - "AC=UNIMOD:21;DM=79.966331 Da;RUNS=8/10;PREV=0.8;AMBIGUITY=low;SEMANTIC=supported"
 
   - name: comment[ms2 mass analyzer]
     ontology_accession: MS:1000443
